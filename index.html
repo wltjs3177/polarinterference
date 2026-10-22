@@ -1,0 +1,531 @@
+<title>편광과 간섭 탐구</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: 왼쪽은 편광기를 끌어 놓는 광학 배치도, 오른쪽은 스크린과 판정. 아래는 광원과 편광축 조절 */
+:root{
+  --bg:#eceff1; --panel:#fafbfb; --ink:#1c2328; --muted:#5b6670; --line:#cdd3d8;
+  --accent:#2c5d88; --accent-soft:#dce7f1;
+  --table:#ffffff; --grid:#dde2e6; --glass:#b9d2da; --back:#4d5964; --film:rgba(60,85,110,.22);
+  --beam1:#c0392b; --beam2:#7a3db8; --laser:#b23a3a;
+  --good:#2f7a4f; --good-soft:#e1f0e6; --mid:#8a6414; --mid-soft:#f6eedb; --off:#5f6870; --off-soft:#eceef0;
+  --f-body:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#14181b; --panel:#1b2024; --ink:#e3e8ec; --muted:#98a3ad; --line:#323a41;
+    --accent:#86b5e0; --accent-soft:#22313f;
+    --table:#191e22; --grid:#283037; --glass:#3a5660; --back:#a3afba; --film:rgba(170,195,215,.22);
+    --beam1:#ff6b5b; --beam2:#c39bf0; --laser:#ff6b5b;
+    --good:#6cc08f; --good-soft:#1e3328; --mid:#d9b25c; --mid-soft:#332a17; --off:#a3acb4; --off-soft:#252b30;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#14181b; --panel:#1b2024; --ink:#e3e8ec; --muted:#98a3ad; --line:#323a41;
+  --accent:#86b5e0; --accent-soft:#22313f;
+  --table:#191e22; --grid:#283037; --glass:#3a5660; --back:#a3afba; --film:rgba(170,195,215,.22);
+  --beam1:#ff6b5b; --beam2:#c39bf0; --laser:#ff6b5b;
+  --good:#6cc08f; --good-soft:#1e3328; --mid:#d9b25c; --mid-soft:#332a17; --off:#a3acb4; --off-soft:#252b30;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:14px;line-height:1.55}
+.wrap{max-width:1200px;margin:0 auto;padding-block:22px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:16px}
+header{display:flex;flex-direction:column;gap:4px}
+.eyebrow{font-size:12px;letter-spacing:.06em;color:var(--muted)}
+h1{margin:0;font-size:24px;font-weight:700;letter-spacing:-.01em;text-wrap:balance}
+header p{margin:0;color:var(--muted);max-width:78ch}
+h2{margin:0;font-size:15px;font-weight:600}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:14px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.grid{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(0,1fr);gap:16px;align-items:start}
+@media (max-width:900px){.grid{grid-template-columns:minmax(0,1fr)}}
+.col{display:flex;flex-direction:column;gap:16px;min-width:0}
+.head{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
+.hint{font-size:12px;color:var(--muted)}
+canvas{display:block;width:100%;height:auto;border-radius:4px}
+#screen{background:#121214;aspect-ratio:1;max-width:400px;margin:0 auto}
+#diagram{aspect-ratio:760/470;border:1px solid var(--line);touch-action:none}
+button{font:inherit;font-size:13px;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:5px 10px;cursor:pointer}
+button:hover{border-color:var(--accent)}
+button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+button[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent);font-weight:600}
+.presets{display:flex;flex-wrap:wrap;gap:6px}
+.verdict{border-radius:6px;padding:12px 14px;display:flex;flex-direction:column;gap:6px;border:1px solid var(--line)}
+.verdict.yes{background:var(--good-soft);border-color:var(--good)}
+.verdict.mid{background:var(--mid-soft);border-color:var(--mid)}
+.verdict.no{background:var(--off-soft)}
+.verdict .big{font-size:20px;font-weight:700}
+.verdict.yes .big{color:var(--good)} .verdict.mid .big{color:var(--mid)} .verdict.no .big{color:var(--off)}
+.verdict p{margin:0;font-size:13.5px}
+.where{display:grid;grid-template-columns:auto minmax(0,1fr);gap:3px 12px;font-size:13px}
+.where dt{color:var(--muted)} .where dd{margin:0}
+.ctls{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px 20px}
+.ctl{display:flex;flex-direction:column;gap:5px;min-width:0}
+.ctl .top{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
+.ctl .name{font-weight:600}
+.ctl .name small{font-weight:400;color:var(--muted);margin-left:6px;font-size:12px}
+.ctl output{font-family:var(--f-mono);color:var(--accent);font-variant-numeric:tabular-nums}
+.ctl .line{display:flex;gap:10px;align-items:center}
+.chips{display:flex;gap:4px;flex-wrap:wrap}
+.chips button{padding:2px 9px;font-size:12px}
+input[type=range]{width:100%;accent-color:var(--accent)}
+.radios{display:flex;gap:14px;font-size:13px;flex-wrap:wrap}
+.radios label{display:flex;gap:5px;align-items:center;cursor:pointer}
+.legend{display:flex;flex-wrap:wrap;gap:4px 16px;font-size:12px;color:var(--muted)}
+.legend i{display:inline-block;width:14px;height:3px;border-radius:2px;vertical-align:middle;margin-right:4px}
+details summary{cursor:pointer;font-weight:600}
+details ul{margin:8px 0 0;padding-left:20px;color:var(--muted);display:flex;flex-direction:column;gap:3px}
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">물리학 실험 · 재민 간섭계 · 편광과 간섭</div>
+    <h1>편광 방향과 간섭무늬</h1>
+    <p>재민 간섭계에서 하나의 레이저 빛이 경로 1과 경로 2로 나뉘었다가 스크린에서 다시 만납니다. 두 빛은 같은 광원에서 나와 결이 맞습니다. 편광기 ①②③을 끌어서 광경로에 놓거나 보관함으로 빼 보며, 편광기가 있을 때와 없을 때 스크린의 간섭무늬를 비교해 보세요.</p>
+  </header>
+
+  <div class="grid">
+    <section class="panel" aria-labelledby="dia-h">
+      <div class="head"><h2 id="dia-h">광학 배치도 (위에서 본 모습)</h2><span class="hint">경로 1과 2의 간격(실제 약 4 mm)과 거울 두께는 크게 그렸습니다</span></div>
+      <div class="presets" role="group" aria-label="탐구 상황 불러오기">
+        <button data-preset="none">편광기 없음</button>
+        <button data-preset="same">① 편광 같음</button>
+        <button data-preset="perp">② 편광 수직</button>
+        <button data-preset="d45">③ 45° 어긋남</button>
+        <button data-preset="eras45">④ 수직 + 분석 45°</button>
+        <button data-preset="eras135">⑤ 수직 + 분석 135°</button>
+        <button data-preset="natural">⑥ 자연광 + 수직 + 분석 45°</button>
+      </div>
+      <canvas id="diagram" width="1520" height="940" aria-label="재민 간섭계 배치도. 편광기를 끌어 광경로에 놓고, 원형 다이얼을 끌어 편광축을 돌립니다."></canvas>
+      <div class="legend">
+        <span><i style="background:var(--beam1)"></i>빛 1 (경로 1)</span>
+        <span><i style="background:var(--beam2)"></i>빛 2 (경로 2)</span>
+        <span>편광기 막대를 끌기: 옮기기 (광선 가까이 놓으면 광선 위에 붙음)</span>
+        <span>둥근 다이얼을 끌기: 편광축 돌리기</span>
+        <span>원 안의 화살표: 빛의 편광 방향 · ✳: 편광되지 않은 빛</span>
+      </div>
+    </section>
+
+    <div class="col">
+      <section class="panel" aria-labelledby="scr-h">
+        <h2 id="scr-h">스크린 (두 빛이 겹친 광점)</h2>
+        <canvas id="screen" width="360" height="360" aria-label="스크린에 나타난 광점과 간섭무늬"></canvas>
+      </section>
+      <section class="panel" aria-labelledby="res-h">
+        <h2 id="res-h">관찰 결과</h2>
+        <div class="verdict" id="verdict"><div class="big" id="v-big"></div><p id="v-why"></p></div>
+        <dl class="where" id="where"></dl>
+      </section>
+    </div>
+  </div>
+
+  <section class="panel" aria-labelledby="ctl-h">
+    <h2 id="ctl-h">광원과 편광축</h2>
+    <div class="ctls" id="ctls">
+      <div class="ctl">
+        <div class="top"><span class="name">광원</span><output id="src-out"></output></div>
+        <div class="radios" role="radiogroup" aria-label="광원 종류">
+          <label><input type="radio" name="src" value="lin" checked> 선편광 레이저</label>
+          <label><input type="radio" name="src" value="nat"> 편광되지 않은 빛 (자연광)</label>
+        </div>
+        <div class="line"><input type="range" id="src-ang" min="0" max="179" step="1" value="45" aria-label="레이저 편광 방향"></div>
+      </div>
+    </div>
+    <details>
+      <summary>이 시뮬레이션의 물리 모델</summary>
+      <ul>
+        <li>빛의 편광은 존스 벡터(수직 성분, 수평 성분)로, 편광기는 이상적인 선형 편광기(편광축 방향 성분만 100% 통과)로 계산합니다. 편광기 하나를 지난 세기는 말뤼스 법칙 I = I₀cos²θ를 따릅니다.</li>
+        <li>편광기는 놓인 자리에 따라 작용이 달라집니다. 레이저와 거울 1 사이에 놓으면 두 빛 모두에, 경로 1이나 경로 2에 놓으면 그 빛에만, 거울 2와 스크린 사이에 놓으면 겹쳐 진행하는 두 빛 모두에 작용합니다.</li>
+        <li>스크린의 세기는 I = |E₁|² + |E₂|² + 2(E₁·E₂)cos δ 입니다. δ는 스크린 위치에 따라 변하는 두 빛의 위상차입니다.</li>
+        <li>자연광은 서로 수직이고 위상 관계가 없는 두 편광 성분의 합으로 계산합니다(각 성분 세기 절반). 같은 성분에서 나온 빛끼리만 간섭합니다.</li>
+        <li>실제 유리 표면은 편광 방향에 따라 반사율이 조금 다르지만, 여기서는 두 빛의 세기가 같고 거울 반사가 편광을 바꾸지 않는다고 가정합니다. 편광기를 넣을 때 생기는 아주 작은 광경로 변화(줄무늬가 조금 옮겨 가는 현상)도 무시합니다.</li>
+        <li>스크린 화면은 무늬가 잘 보이도록 밝기를 자동으로 맞춘 모습입니다. 편광기를 지날수록 실제 빛은 더 어두워집니다.</li>
+        <li>편광 각도는 실험대 면에 수직인 방향을 0°로 하고, 빛이 오는 쪽을 마주 볼 때 시계 방향으로 잽니다. 편광축은 180°마다 같아지므로 0°~179°만 씁니다.</li>
+      </ul>
+    </details>
+  </section>
+</div>
+
+<script>
+(function(){
+"use strict";
+const $=s=>document.querySelector(s);
+const PI=Math.PI, RAD=PI/180;
+const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+
+/* =========================================================
+   배치도 기하 (캔버스 논리 좌표)
+   ========================================================= */
+const W=760,H=470;
+const GEO={xL:110,yL:450,yP1:300,yP2:270,xM2:560,yS:48};
+const XO=GEO.xM2+15;                        // 거울 2에서 스크린으로 가는 두 빛
+const TRAY={x:236,y:364,w:500,h:92};
+// 광선 구간: 레이저(L), 경로 1(P1), 경로 2(P2), 출력(O: 두 빛 겹침)
+const SEGS=[
+  {id:"L", x0:GEO.xL,y0:GEO.yL,x1:GEO.xL,y1:GEO.yP1,name:"레이저와 거울 1 사이 (두 빛 모두)"},
+  {id:"P1",x0:GEO.xL,y0:GEO.yP1,x1:GEO.xM2,y1:GEO.yP1,name:"경로 1 (빛 1에만)"},
+  {id:"P2",x0:GEO.xL+30,y0:GEO.yP2,x1:GEO.xM2+30,y1:GEO.yP2,name:"경로 2 (빛 2에만)"},
+  {id:"O", x0:XO,y0:GEO.yP2-14,x1:XO,y1:GEO.yS,name:"거울 2와 스크린 사이 (두 빛 모두)"},
+];
+const isH=s=>s.y0===s.y1;
+
+/* =========================================================
+   상태
+   ========================================================= */
+const ST={src:"lin",srcAng:45};
+const LEN=22;
+const pieces=[
+  {id:"a",name:"편광기 ①",tag:"①",angle:0, home:[300,414]},
+  {id:"b",name:"편광기 ②",tag:"②",angle:90,home:[440,414]},
+  {id:"c",name:"편광기 ③",tag:"③",angle:45,home:[580,414]},
+];
+pieces.forEach(p=>{p.x=p.home[0];p.y=p.home[1];});
+const byId=id=>pieces.find(p=>p.id===id);
+const inTray=p=>p.x>TRAY.x&&p.x<TRAY.x+TRAY.w&&p.y>TRAY.y&&p.y<TRAY.y+TRAY.h;
+const SPOT={L:[GEO.xL,370],P1:[300,GEO.yP1],P2:[390,GEO.yP2],O:[XO,150]};
+
+function distSeg(px,py,s){
+  const dx=s.x1-s.x0, dy=s.y1-s.y0, L2=dx*dx+dy*dy;
+  let t=((px-s.x0)*dx+(py-s.y0)*dy)/L2; t=Math.max(0,Math.min(1,t));
+  return Math.hypot(s.x0+t*dx-px,s.y0+t*dy-py);
+}
+function nearest(p){ let best=null,bd=1e9; for(const s of SEGS){const d=distSeg(p.x,p.y,s); if(d<bd){bd=d;best=s;}} return {s:best,d:bd}; }
+function orient(p){ if(inTray(p)) return "h"; return isH(nearest(p).s)?"v":"h"; }
+function pRect(p){
+  const o=orient(p), th=9;
+  return o==="h"?{o,x0:p.x-LEN/2,x1:p.x+LEN/2,y0:p.y-th/2,y1:p.y+th/2}:{o,x0:p.x-th/2,x1:p.x+th/2,y0:p.y-LEN/2,y1:p.y+LEN/2};
+}
+function dialPos(p,r){
+  r=r||pRect(p);
+  if(r.o==="h") return [r.x1+20,p.y];
+  const mid=(GEO.yP1+GEO.yP2)/2;
+  return p.y<mid?[p.x,r.y0-20]:[p.x,r.y1+20];
+}
+function crossT(s,r){
+  if(isH(s)){
+    if(s.y0<r.y0||s.y0>r.y1) return null;
+    const a=Math.min(s.x0,s.x1), b=Math.max(s.x0,s.x1); if(r.x1<a||r.x0>b) return null;
+    return (Math.max(a,Math.min(b,(r.x0+r.x1)/2))-s.x0)/(s.x1-s.x0);
+  }
+  if(s.x0<r.x0-3||s.x0>r.x1+3) return null;   // 출력은 두 빛이 겹친 굵기
+  const a=Math.min(s.y0,s.y1), b=Math.max(s.y0,s.y1); if(r.y1<a||r.y0>b) return null;
+  return (Math.max(a,Math.min(b,(r.y0+r.y1)/2))-s.y0)/(s.y1-s.y0);
+}
+function segPieces(){
+  const out={L:[],P1:[],P2:[],O:[]};
+  for(const p of pieces){ if(inTray(p)) continue; const r=pRect(p); for(const s of SEGS){ const t=crossT(s,r); if(t!==null) out[s.id].push({p,t}); } }
+  for(const k in out) out[k].sort((a,b)=>a.t-b.t);
+  return out;
+}
+
+/* =========================================================
+   물리 계산 (존스 벡터, 실수 성분: [수직, 수평])
+   ========================================================= */
+const polM=a=>{const c=Math.cos(a*RAD), s=Math.sin(a*RAD); return [c*c,c*s,c*s,s*s];};
+const mv=(M,v)=>[M[0]*v[0]+M[1]*v[1],M[2]*v[0]+M[3]*v[1]];
+const dot=(u,v)=>u[0]*v[0]+u[1]*v[1];
+const I=v=>dot(v,v);
+const thru=(list,v)=>{ for(const {p} of list) v=mv(polM(p.angle),v); return v; };
+
+let SP=null;
+function compute(){
+  SP=segPieces();
+  const states=ST.src==="lin"
+    ? [{w:1,e:[Math.cos(ST.srcAng*RAD),Math.sin(ST.srcAng*RAD)]}]
+    : [{w:0.5,e:[1,0]},{w:0.5,e:[0,1]}];
+  let I1=0,I2=0,G=0,G0=0; const tr=[];
+  for(const st of states){
+    const split=thru(SP.L,st.e);              // 나뉘기 직전
+    const a0=thru(SP.P1,split), b0=thru(SP.P2,split);   // 거울 2에 닿기 직전
+    const a=thru(SP.O,a0), b=thru(SP.O,b0);   // 스크린 도착
+    G0+=st.w*2*dot(a0,b0);
+    I1+=st.w*I(a); I2+=st.w*I(b); G+=st.w*2*dot(a,b);
+    tr.push({w:st.w,src:st.e,split,a0,b0,a,b});
+  }
+  const S=I1+I2, V=S>1e-12?Math.abs(G)/S:0;
+  return {I1,I2,S,G,G0,V,Imax:S+Math.abs(G),tr};
+}
+function polInfo(vecs,polarized){
+  const tot=vecs.reduce((a,o)=>a+o.w*I(o.v),0);
+  if(tot<1e-9) return {I:0};
+  if(!polarized) return {I:tot,nat:true};
+  let best=vecs[0]; for(const o of vecs) if(o.w*I(o.v)>best.w*I(best.v)) best=o;
+  let ang=Math.atan2(best.v[1],best.v[0])/RAD; ang=((ang%180)+180)%180;
+  return {I:tot,ang};
+}
+const angBetween=(a1,a2)=>{ let d=Math.abs(a1-a2)%180; return d>90?180-d:d; };
+
+/* =========================================================
+   스크린 (밝기 자동 맞춤, 빨간 무늬만)
+   ========================================================= */
+const scr=$("#screen"), sx=scr.getContext("2d"), SN=scr.width;
+const FR={period:SN/8.2, tilt:35*RAD, R:SN*0.36};
+const noise=new Float32Array(SN*SN); for(let i=0;i<noise.length;i++) noise[i]=Math.random();
+function drawScreen(r){
+  const img=sx.createImageData(SN,SN), d=img.data, peak=Math.max(r.Imax,1e-12);
+  const k=2*PI/FR.period, c=SN/2, ct=Math.cos(FR.tilt), st=Math.sin(FR.tilt);
+  for(let j=0;j<SN;j++) for(let i=0;i<SN;i++){
+    const x=i-c, y=j-c, q=(x*x+y*y)/(FR.R*FR.R), env=Math.exp(-q*q*q);
+    const v=r.S>1e-9?Math.max(0,Math.min(1,env*(r.S+r.G*Math.cos(k*(x*ct+y*st)))/peak)):0;
+    const L=Math.pow(v,0.85), o=(j*SN+i)*4, bg=16+noise[j*SN+i]*5;
+    d[o]=bg+(255-bg)*L; d[o+1]=bg+(255-bg)*0.08*L; d[o+2]=bg+(255-bg)*0.06*L; d[o+3]=255;
+  }
+  sx.putImageData(img,0,0);
+  if(r.S<1e-9){ sx.fillStyle="rgba(255,255,255,.8)"; sx.font="15px "+css("--f-body"); sx.textAlign="center"; sx.fillText("스크린에 빛이 도달하지 않음",SN/2,SN/2); }
+}
+
+/* =========================================================
+   배치도 그리기
+   ========================================================= */
+const dg=$("#diagram"), dx=dg.getContext("2d"); dx.setTransform(2,0,0,2,0,0);
+const beamAlpha=Iv=>Iv<1e-9?0:Math.min(1,0.2+0.8*Math.sqrt(Iv));
+function seg(x0,y0,x1,y1,col,w,alpha){ if(alpha<=0) return; dx.globalAlpha=alpha; dx.strokeStyle=col; dx.lineWidth=w; dx.beginPath(); dx.moveTo(x0,y0); dx.lineTo(x1,y1); dx.stroke(); dx.globalAlpha=1; }
+// 구간을 편광기 위치에서 나누어, 지날 때마다 세기를 바꿔 그림
+function drawBeam(s,list,vecs,col,w,off){
+  let cur=vecs.map(o=>({w:o.w,v:o.v})), t0=0;
+  const stops=list.map(o=>o.t).concat([1]);
+  const ox=off&&!isH(s)?off:0, oy=off&&isH(s)?off:0;
+  for(let i=0;i<stops.length;i++){
+    const t1=stops[i], Iv=cur.reduce((a,o)=>a+o.w*I(o.v),0);
+    seg(s.x0+(s.x1-s.x0)*t0+ox,s.y0+(s.y1-s.y0)*t0+oy,s.x0+(s.x1-s.x0)*t1+ox,s.y0+(s.y1-s.y0)*t1+oy,col,w,beamAlpha(Iv));
+    if(i<list.length){ const M=polM(list[i].p.angle); cur=cur.map(o=>({w:o.w,v:mv(M,o.v)})); }
+    t0=t1;
+  }
+}
+function glyph(x,y,info,col,label){
+  dx.beginPath(); dx.arc(x,y,11,0,2*PI); dx.fillStyle=css("--table"); dx.fill(); dx.lineWidth=1; dx.strokeStyle=css("--muted"); dx.stroke();
+  if(!info||info.I<1e-9){ dx.fillStyle=css("--muted"); dx.font="10px "+css("--f-body"); dx.textAlign="center"; dx.fillText("없음",x,y+4); }
+  else if(info.nat){ dx.strokeStyle=col; dx.lineWidth=1.4;
+    for(let k=0;k<4;k++){ const a=k*PI/4; dx.beginPath(); dx.moveTo(x-7*Math.sin(a),y+7*Math.cos(a)); dx.lineTo(x+7*Math.sin(a),y-7*Math.cos(a)); dx.stroke(); } }
+  else {
+    const a=info.ang*RAD, ux=Math.sin(a)*8, uy=-Math.cos(a)*8;
+    dx.strokeStyle=col; dx.fillStyle=col; dx.lineWidth=2;
+    dx.beginPath(); dx.moveTo(x-ux,y-uy); dx.lineTo(x+ux,y+uy); dx.stroke();
+    for(const g of [1,-1]){ const tx=x+g*ux, ty=y+g*uy, bx=-g*ux/8, by=-g*uy/8;
+      dx.beginPath(); dx.moveTo(tx,ty); dx.lineTo(tx+bx*4+by*2.6,ty+by*4-bx*2.6); dx.lineTo(tx+bx*4-by*2.6,ty+by*4+bx*2.6); dx.closePath(); dx.fill(); }
+  }
+  if(label){ dx.fillStyle=col; dx.font="600 11px "+css("--f-body"); dx.textAlign="center"; dx.fillText(label,x,y-15); }
+}
+function mirror(cx,cy,glassDir,label,lx,ly){
+  const ux=Math.SQRT1_2, uy=-Math.SQRT1_2, nx=glassDir*(-uy), ny=glassDir*ux, L=74, T=13;
+  const a=[cx-ux*L,cy-uy*L], b=[cx+ux*L,cy+uy*L];
+  dx.beginPath(); dx.moveTo(a[0],a[1]); dx.lineTo(b[0],b[1]); dx.lineTo(b[0]+nx*T,b[1]+ny*T); dx.lineTo(a[0]+nx*T,a[1]+ny*T); dx.closePath();
+  dx.globalAlpha=.55; dx.fillStyle=css("--glass"); dx.fill(); dx.globalAlpha=1;
+  dx.lineWidth=1; dx.strokeStyle=css("--muted"); dx.beginPath(); dx.moveTo(a[0],a[1]); dx.lineTo(b[0],b[1]); dx.stroke();
+  dx.lineWidth=3.5; dx.strokeStyle=css("--back"); dx.beginPath(); dx.moveTo(a[0]+nx*T,a[1]+ny*T); dx.lineTo(b[0]+nx*T,b[1]+ny*T); dx.stroke();
+  dx.fillStyle=css("--ink"); dx.font="600 13px "+css("--f-body"); dx.textAlign="left"; dx.fillText(label,lx,ly);
+}
+function drawPiece(p){
+  const r=pRect(p), act=drag&&drag.p===p;
+  dx.fillStyle=css("--film"); dx.fillRect(r.x0,r.y0,r.x1-r.x0,r.y1-r.y0);
+  dx.lineWidth=act?2:1.2; dx.strokeStyle=act?css("--accent"):css("--ink"); dx.strokeRect(r.x0+.5,r.y0+.5,r.x1-r.x0-1,r.y1-r.y0-1);
+  const [cx,cy]=dialPos(p,r);
+  dx.setLineDash([2,2]); dx.strokeStyle=css("--muted"); dx.lineWidth=1; dx.beginPath(); dx.moveTo((r.x0+r.x1)/2,(r.y0+r.y1)/2); dx.lineTo(cx,cy); dx.stroke(); dx.setLineDash([]);
+  dx.beginPath(); dx.arc(cx,cy,15,0,2*PI); dx.fillStyle=css("--panel"); dx.fill();
+  dx.lineWidth=act&&drag.mode==="rot"?2.5:1.2; dx.strokeStyle=act&&drag.mode==="rot"?css("--accent"):css("--ink"); dx.stroke();
+  dx.strokeStyle=css("--muted"); dx.lineWidth=1;
+  for(let t=0;t<180;t+=45){ const a=t*RAD; for(const g of [1,-1]){ dx.beginPath(); dx.moveTo(cx+g*12*Math.sin(a),cy-g*12*Math.cos(a)); dx.lineTo(cx+g*15*Math.sin(a),cy-g*15*Math.cos(a)); dx.stroke(); } }
+  const a=p.angle*RAD, ux=Math.sin(a)*11, uy=-Math.cos(a)*11;
+  dx.strokeStyle=css("--ink"); dx.lineWidth=2.4; dx.beginPath(); dx.moveTo(cx-ux,cy-uy); dx.lineTo(cx+ux,cy+uy); dx.stroke();
+  dx.fillStyle=css("--ink"); dx.font="600 12px "+css("--f-body");
+  const lbl=p.tag+" "+p.angle+"°";
+  if(r.o==="h"){ dx.textAlign="center"; dx.fillText(lbl,p.x,r.y1+16); }
+  else { dx.textAlign="left"; dx.fillText(lbl,r.x1+6,p.y+(p.y<(GEO.yP1+GEO.yP2)/2?-6:16)); }
+}
+function drawDiagram(r){
+  const c1=css("--beam1"), c2=css("--beam2"), cl=css("--laser"), nat=ST.src==="nat";
+  dx.fillStyle=css("--table"); dx.fillRect(0,0,W,H);
+  dx.fillStyle=css("--grid"); for(let x=20;x<W;x+=20) for(let y=20;y<H;y+=20) dx.fillRect(x-1,y-1,2,2);
+  // 보관함
+  dx.setLineDash([5,4]); dx.strokeStyle=css("--muted"); dx.lineWidth=1; dx.strokeRect(TRAY.x,TRAY.y,TRAY.w,TRAY.h); dx.setLineDash([]);
+  dx.fillStyle=css("--muted"); dx.font="12px "+css("--f-body"); dx.textAlign="left"; dx.fillText("편광기 보관함 · 여기에 두면 광경로에서 빠집니다",TRAY.x+8,TRAY.y+16);
+  // 광선
+  const tr=r.tr, V=f=>tr.map(s=>({w:s.w,v:f(s)}));
+  drawBeam(SEGS[0],SP.L,V(s=>s.src),cl,2.6,0);
+  drawBeam(SEGS[1],SP.P1,V(s=>s.split),c1,2.4,0);
+  drawBeam(SEGS[2],SP.P2,V(s=>s.split),c2,2.4,0);
+  drawBeam(SEGS[3],SP.O,V(s=>s.a0),c1,2,-2.2);
+  drawBeam(SEGS[3],SP.O,V(s=>s.b0),c2,2,2.2);
+  // 장치
+  dx.fillStyle=css("--ink"); dx.fillRect(GEO.xL-12,GEO.yL-6,24,20);
+  dx.font="600 13px "+css("--f-body"); dx.textAlign="right"; dx.fillText(nat?"광원 (자연광)":"레이저 ("+ST.srcAng+"°)",GEO.xL-18,GEO.yL+8);
+  mirror(GEO.xL+15,GEO.yP2+15,-1,"거울 1",GEO.xL-96,GEO.yP2-58);
+  mirror(GEO.xM2+15,GEO.yP2+15,1,"거울 2",GEO.xM2+66,GEO.yP2+72);
+  dx.strokeStyle=css("--ink"); dx.lineWidth=4; dx.beginPath(); dx.moveTo(XO-60,GEO.yS-3); dx.lineTo(XO+60,GEO.yS-3); dx.stroke();
+  dx.fillStyle=css("--ink"); dx.font="600 13px "+css("--f-body"); dx.textAlign="right"; dx.fillText("스크린",XO-68,GEO.yS+2);
+  dx.fillStyle=css("--muted"); dx.font="12px "+css("--f-body"); dx.textAlign="left";
+  dx.fillText("경로 1",200,GEO.yP1+17); dx.fillText("경로 2",200,GEO.yP2-8);
+  // 편광 표시
+  const anyL=SP.L.length>0, pol0=!nat;
+  glyph(GEO.xL+32,424,polInfo(V(s=>s.src),pol0),cl,"");
+  glyph(GEO.xL+32,330,polInfo(V(s=>s.split),pol0||anyL),cl,"");
+  glyph(505,GEO.yP1+24,polInfo(V(s=>s.a0),pol0||anyL||SP.P1.length>0),c1,"");
+  glyph(505,GEO.yP2-24,polInfo(V(s=>s.b0),pol0||anyL||SP.P2.length>0),c2,"");
+  const pa=pol0||anyL||SP.P1.length>0||SP.O.length>0, pb=pol0||anyL||SP.P2.length>0||SP.O.length>0;
+  glyph(XO-62,92,polInfo(V(s=>s.a),pa),c1,"빛 1");
+  glyph(XO-34,92,polInfo(V(s=>s.b),pb),c2,"빛 2");
+  // 편광기 (끄는 중인 것을 맨 위에)
+  for(const p of pieces) drawPiece(p);
+}
+
+/* =========================================================
+   판정과 설명
+   ========================================================= */
+function judge(r){
+  const nat=ST.src==="nat", tr=r.tr, V=f=>tr.map(s=>({w:s.w,v:f(s)}));
+  const anyL=SP.L.length>0, anyO=SP.O.length>0, pol0=!nat;
+  const iA=polInfo(V(s=>s.a),pol0||anyL||SP.P1.length>0||anyO), iB=polInfo(V(s=>s.b),pol0||anyL||SP.P2.length>0||anyO);
+  const A0=polInfo(V(s=>s.a0),pol0||anyL||SP.P1.length>0), B0=polInfo(V(s=>s.b0),pol0||anyL||SP.P2.length>0);
+  const dAng=(iA.I>1e-9&&iB.I>1e-9&&!iA.nat&&!iB.nat)?angBetween(iA.ang,iB.ang):null;
+  const preOrth=A0.I>1e-9&&B0.I>1e-9&&Math.abs(r.G0)<1e-9;
+  let big,why,cls;
+  if(r.S<1e-9){ big="스크린에 빛이 없음"; why="편광축이 서로 수직인 편광기를 차례로 지나면서 빛이 모두 막혔습니다."; cls="no"; }
+  else if(r.I1<1e-9||r.I2<1e-9){
+    const bl=r.I1<1e-9?"빛 1":"빛 2", al=r.I1<1e-9?"빛 2":"빛 1";
+    big="간섭무늬 없음"; cls="no";
+    why=`${bl}이 편광기에 완전히 막혀 스크린에는 ${al}만 도착합니다. 겹칠 빛이 없으니 간섭할 수 없습니다.`;
+  }
+  else if(r.V<0.005){
+    big="간섭무늬 없음"; cls="no";
+    if(nat&&!anyL&&anyO&&dAng!==null&&dAng<1)
+      why="두 빛은 자연광의 서로 수직인 두 성분에서 각각 나왔습니다. 이 두 성분은 위상 관계가 없어서, 스크린 앞 편광기로 편광 방향을 같게 맞춰도 간섭하지 않습니다 (프레넬–아라고 법칙). 레이저와 거울 1 사이에 편광기를 하나 더 놓으면 무늬가 생깁니다.";
+    else if(dAng!==null&&Math.abs(dAng-90)<0.5)
+      why="두 빛의 편광 방향이 서로 수직입니다. 수직인 두 진동은 서로 더해도 보강·상쇄가 일어나지 않아 세기가 그냥 더해집니다.";
+    else why="두 빛 사이에 위상 관계가 일정하고 방향이 같은 편광 성분이 없어 세기가 그냥 더해집니다.";
+  }
+  else {
+    cls=r.V>=0.8?"yes":"mid";
+    big=r.V>=0.8?"뚜렷한 간섭무늬":(r.V>=0.15?"흐린 간섭무늬":"아주 흐린 간섭무늬");
+    const parts=[];
+    if(anyO&&preOrth) parts.push("거울 2에 닿기 전에는 두 빛의 편광이 수직이었지만, 스크린 앞 편광기가 두 빛 모두에서 같은 방향 성분만 통과시켜 편광 방향이 같아졌습니다. 그래서 다시 간섭합니다.");
+    else if(dAng!==null&&dAng<0.5) parts.push("두 빛의 편광 방향이 같아 진동이 그대로 더해지므로 보강·상쇄 간섭이 일어납니다.");
+    else if(dAng!==null) parts.push(`두 빛의 편광이 ${dAng.toFixed(0)}° 어긋나 있어 같은 방향인 성분끼리만 간섭합니다. 어긋난 각이 클수록 무늬가 흐려집니다.`);
+    else parts.push("두 빛이 같은 광원에서 나와 결이 맞으므로 간섭합니다.");
+    if(nat&&!anyL&&(SP.P1.length||SP.P2.length)) parts.push("자연광에서 나온 두 빛은 광원의 같은 편광 성분에서 나온 부분끼리만 결이 맞아서, 선편광 레이저보다 무늬가 흐릴 수 있습니다.");
+    if(Math.abs(r.I1-r.I2)/(r.I1+r.I2)>0.05) parts.push("두 빛의 세기가 달라서 어두운 줄이 완전히 어두워지지는 않습니다.");
+    if(r.G<0) parts.push("밝은 줄과 어두운 줄의 자리가 서로 바뀐 무늬(반 칸 옮겨 간 무늬)입니다.");
+    why=parts.join(" ");
+  }
+  $("#verdict").className="verdict "+cls; $("#v-big").textContent=big; $("#v-why").textContent=why;
+  // 각 구간에 놓인 편광기
+  const names={L:"레이저 → 거울 1",P1:"경로 1",P2:"경로 2",O:"거울 2 → 스크린"};
+  let h="";
+  for(const k of ["L","P1","P2","O"]){ const l=SP[k].map(({p})=>`${p.tag} ${p.angle}°`); h+=`<dt>${names[k]}</dt><dd>${l.length?l.join(" → "):"편광기 없음"}</dd>`; }
+  $("#where").innerHTML=h;
+}
+
+/* =========================================================
+   조절 패널 (편광축 각도)
+   ========================================================= */
+function buildCtls(){
+  const box=$("#ctls");
+  for(const p of pieces){
+    const div=document.createElement("div"); div.className="ctl";
+    div.innerHTML=`<div class="top"><span class="name">${p.name}<small id="${p.id}-loc"></small></span><output id="${p.id}-out"></output></div>
+      <div class="line"><input type="range" id="${p.id}-a" min="0" max="179" step="1" aria-label="${p.name} 편광축 각도"></div>
+      <div class="chips">${[0,45,90,135].map(a=>`<button data-k="${p.id}" data-a="${a}">${a}°</button>`).join("")}<button data-home="${p.id}">보관함으로</button></div>`;
+    box.appendChild(div);
+    $("#"+p.id+"-a").addEventListener("input",e=>{ p.angle=+e.target.value; clearPreset(); update(); });
+  }
+  box.querySelectorAll("[data-k]").forEach(b=>b.addEventListener("click",()=>{ byId(b.dataset.k).angle=+b.dataset.a; clearPreset(); update(); }));
+  box.querySelectorAll("[data-home]").forEach(b=>b.addEventListener("click",()=>{ const p=byId(b.dataset.home); p.x=p.home[0]; p.y=p.home[1]; clearPreset(); update(); }));
+  document.querySelectorAll("input[name=src]").forEach(r=>r.addEventListener("change",()=>{ ST.src=r.value; clearPreset(); update(); }));
+  $("#src-ang").addEventListener("input",e=>{ ST.srcAng=+e.target.value; clearPreset(); update(); });
+}
+function locName(p){
+  if(inTray(p)) return "보관함";
+  for(const k of ["L","P1","P2","O"]) if(SP[k].some(o=>o.p===p)) return {L:"레이저 앞",P1:"경로 1",P2:"경로 2",O:"스크린 앞"}[k];
+  return "광선 밖";
+}
+function syncCtls(){
+  for(const p of pieces){
+    $("#"+p.id+"-a").value=p.angle; $("#"+p.id+"-out").textContent=p.angle+"°";
+    $("#"+p.id+"-loc").textContent="위치: "+locName(p);
+    document.querySelectorAll(`[data-k="${p.id}"]`).forEach(b=>b.setAttribute("aria-pressed",String(p.angle===+b.dataset.a)));
+    document.querySelector(`[data-home="${p.id}"]`).disabled=inTray(p);
+  }
+  document.querySelectorAll("input[name=src]").forEach(r=>r.checked=r.value===ST.src);
+  $("#src-ang").value=ST.srcAng; $("#src-ang").disabled=ST.src!=="lin";
+  $("#src-out").textContent=ST.src==="lin"?"선편광 "+ST.srcAng+"°":"자연광";
+}
+
+/* =========================================================
+   탐구 상황
+   ========================================================= */
+// [놓을 구간 또는 null(보관함), 각도]
+const PRESETS={
+  none:   {src:"lin",a:[null,0], b:[null,90],c:[null,45]},
+  same:   {src:"lin",a:["P1",0], b:["P2",0], c:[null,45]},
+  perp:   {src:"lin",a:["P1",0], b:["P2",90],c:[null,45]},
+  d45:    {src:"lin",a:["P1",0], b:["P2",45],c:[null,45]},
+  eras45: {src:"lin",a:["P1",0], b:["P2",90],c:["O",45]},
+  eras135:{src:"lin",a:["P1",0], b:["P2",90],c:["O",135]},
+  natural:{src:"nat",a:["P1",0], b:["P2",90],c:["O",45]},
+};
+let active=null;
+function applyPreset(n){
+  const c=PRESETS[n]; ST.src=c.src; ST.srcAng=45;
+  for(const p of pieces){ const [where,ang]=c[p.id]; p.angle=ang; const pos=where?SPOT[where]:p.home; p.x=pos[0]; p.y=pos[1]; }
+  active=n; markPreset(); update();
+}
+function markPreset(){ document.querySelectorAll("[data-preset]").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.preset===active))); }
+function clearPreset(){ if(active){ active=null; markPreset(); } }
+document.querySelectorAll("[data-preset]").forEach(b=>b.addEventListener("click",()=>applyPreset(b.dataset.preset)));
+
+/* =========================================================
+   마우스·터치: 막대 끌기 = 옮기기, 다이얼 끌기 = 돌리기
+   ========================================================= */
+let drag=null;
+function toLocal(e){ const r=dg.getBoundingClientRect(); return [(e.clientX-r.left)*W/r.width,(e.clientY-r.top)*H/r.height]; }
+function hit(x,y){
+  for(let i=pieces.length-1;i>=0;i--){
+    const p=pieces[i], r=pRect(p), [cx,cy]=dialPos(p,r);
+    if(Math.hypot(x-cx,y-cy)<18) return {p,mode:"rot"};
+    if(x>=r.x0-8&&x<=r.x1+8&&y>=r.y0-8&&y<=r.y1+8) return {p,mode:"move"};
+  }
+  return null;
+}
+function snap(p){
+  if(inTray(p)) return;
+  const {s,d}=nearest(p);
+  if(d<16){ if(isH(s)) p.y=s.y0; else p.x=s.x0; }   // 광선 가까이 놓으면 광선 위에 붙임
+}
+function rotateTo(p,x,y){
+  const [cx,cy]=dialPos(p); if(Math.hypot(x-cx,y-cy)<4) return;
+  let a=Math.atan2(x-cx,-(y-cy))/RAD; a=((a%180)+180)%180;
+  for(const s of [0,45,90,135,180]) if(Math.abs(a-s)<3) a=s;
+  p.angle=Math.round(a)%180;
+}
+dg.addEventListener("pointerdown",e=>{
+  const [x,y]=toLocal(e), h=hit(x,y); if(!h) return;
+  pieces.splice(pieces.indexOf(h.p),1); pieces.push(h.p);
+  drag={p:h.p,mode:h.mode,dx:x-h.p.x,dy:y-h.p.y};
+  dg.setPointerCapture(e.pointerId); dg.style.cursor="grabbing";
+  if(h.mode==="rot") rotateTo(h.p,x,y);
+  clearPreset(); update();
+});
+dg.addEventListener("pointermove",e=>{
+  const [x,y]=toLocal(e);
+  if(!drag){ const h=hit(x,y); dg.style.cursor=h?"grab":"default"; return; }
+  if(drag.mode==="rot") rotateTo(drag.p,x,y);
+  else { drag.p.x=Math.max(14,Math.min(W-40,x-drag.dx)); drag.p.y=Math.max(14,Math.min(H-14,y-drag.dy)); snap(drag.p); }
+  update();
+});
+const endDrag=()=>{ if(!drag) return; drag=null; dg.style.cursor="default"; update(); };
+dg.addEventListener("pointerup",endDrag); dg.addEventListener("pointercancel",endDrag);
+
+/* =========================================================
+   갱신
+   ========================================================= */
+let q=false;
+function update(){ if(q) return; q=true; requestAnimationFrame(()=>{ q=false; const r=compute(); drawScreen(r); drawDiagram(r); judge(r); syncCtls(); }); }
+try{ matchMedia("(prefers-color-scheme: dark)").addEventListener("change",update); }catch(_){}
+new MutationObserver(update).observe(document.documentElement,{attributes:true,attributeFilter:["data-theme"]});
+
+buildCtls(); applyPreset("none");
+})();
+</script>
